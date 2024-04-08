@@ -16,3 +16,4 @@ transformers
 yfinance
 psycopg
 python-dotenv
+neuralforecast==1.6.4

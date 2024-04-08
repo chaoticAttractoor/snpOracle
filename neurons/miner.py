@@ -36,7 +36,10 @@ from predictionnet.base.miner import BaseMinerNeuron
 import tensorflow
 import numpy as np
 from tensorflow.keras.models import load_model
-
+from neuralforecast import NeuralForecast
+#from base_miner.predict import predict
+from base_miner.get_data import prep_data, scale_data
+from base_miner.chaotic import prep_data_chaotic, extract_data, predict_chaotic
 import os
 
 class Miner(BaseMinerNeuron):
@@ -166,14 +169,14 @@ class Miner(BaseMinerNeuron):
 
         timestamp = synapse.timestamp
 
-        model = load_model(self.model_dir)
-        data = prep_data()
-        scaler, _, _ = scale_data(data)
+        model = NeuralForecast.load(self.model_dir)
+        data = prep_data_chaotic()
+        #scaler, _,# _ = scale_data(data)
         #mse = create_and_save_base_model_lstm(scaler, X, y)
 
         # type needs to be changed based on the algo you're running
         # any algo specific change logic can be added to predict function in predict.py
-        prediction = predict(timestamp, scaler, model, type='lstm') 
+        prediction = predict_chaotic(timestamp, model) 
         
         #pred_np_array = np.array(prediction).reshape(-1, 1)
 
