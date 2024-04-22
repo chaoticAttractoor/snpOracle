@@ -40,7 +40,11 @@ from huggingface_hub import hf_hub_download
 
 import os
 from dotenv import load_dotenv
-
+from neuralforecast import NeuralForecast
+#from base_miner.predict import predict
+from base_miner.get_data import prep_data, scale_data
+from base_miner.chaotic import prep_data_chaotic, extract_data, predict_chaotic
+import os
 load_dotenv()
 
 class Miner(BaseMinerNeuron):
@@ -55,6 +59,7 @@ class Miner(BaseMinerNeuron):
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
         print(config)
+        self.model_dir = f'./mining_models/{self.config.model}'
         # TODO(developer): Anything specific to your use case you can do here
         self.model_loc = self.config.model
         if self.config.neuron.device == 'cpu':
@@ -180,20 +185,24 @@ class Miner(BaseMinerNeuron):
             token = os.getenv("HF_ACCESS_TOKEN")
             model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
             bt.logging.info(f"Model downloaded from huggingface at {model_path}")
-
-        model = load_model(model_path)
-        data = prep_data()
-        scaler, _, _ = scale_data(data)
+            
+            
+        model = NeuralForecast.load(self.model_dir)
+        data = prep_data_chaotic()
+        #scaler, _,# _ = scale_data(data)
         #mse = create_and_save_base_model_lstm(scaler, X, y)
 
         # type needs to be changed based on the algo you're running
         # any algo specific change logic can be added to predict function in predict.py
-        prediction = predict(timestamp, scaler, model, type='lstm') 
+        prediction = predict_chaotic(timestamp, model) 
         
         #pred_np_array = np.array(prediction).reshape(-1, 1)
 
         # logic to ensure that only past 20 day context exists in synapse
-        synapse.prediction = list(prediction[0])
+        synapse.prediction = prediction
+
+        # logic to ensure that only past 20 day context exists in synapse
+        #synapse.prediction = list(prediction[0])
 
         if(synapse.prediction != None):
             bt.logging.success(
