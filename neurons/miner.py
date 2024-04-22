@@ -176,15 +176,14 @@ class Miner(BaseMinerNeuron):
         timestamp = synapse.timestamp
 
         # Download the file
-        if(self.config.hf_repo_id=="LOCAL"):
-            model_path = f'./{self.config.model}'
-            bt.logging.info(f"Model weights file from a local folder will be loaded - Local weights file path: {self.config.model}")
-        else:
-            if not os.getenv("HF_ACCESS_TOKEN"):
-                print("Cannot find a Huggingface Access Token - model download halted.")
-            token = os.getenv("HF_ACCESS_TOKEN")
-            model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
-            bt.logging.info(f"Model downloaded from huggingface at {model_path}")
+        #if(self.config.hf_repo_id=="LOCAL"):
+       #     bt.logging.info(f"Model weights file from a local folder will be loaded - Local weights file path: {self.config.model}")
+       # else:
+       #     if not os.getenv("HF_ACCESS_TOKEN"):
+       #         print("Cannot find a Huggingface Access Token - model download halted.")
+       #     token = os.getenv("HF_ACCESS_TOKEN")
+       #     model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
+       #     bt.logging.info(f"Model downloaded from huggingface at {model_path}")
             
             
         model = NeuralForecast.load(self.model_dir)
