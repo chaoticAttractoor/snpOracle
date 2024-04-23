@@ -152,6 +152,6 @@ if(__name__=='__main__'):
     timestamp = current_time_ny.isoformat()
     data = prep_data_chaotic()
     prediction = predict_chaotic(timestamp, model) 
-    print(f"current pred is {prediction}")
+    print(f"current pred is { prediction[0].tolist()}")
 
  
