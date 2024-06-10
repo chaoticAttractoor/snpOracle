@@ -146,7 +146,7 @@ if(__name__=='__main__'):
     #mse = create_and_save_base_model_regression(scaler, X, y)
 
     #model = joblib.load('mining_models/base_linear_regression.joblib')
-    model = NeuralForecast.load('mining_models/chaotic_snp')
+    model = NeuralForecast.load('mining_models/chaotic_snp/')
     ny_timezone = timezone('America/New_York')
     current_time_ny = datetime.now(ny_timezone)
     timestamp = current_time_ny.isoformat()
