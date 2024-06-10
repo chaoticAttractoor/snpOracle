@@ -74,14 +74,14 @@ def round_down_time(dt:datetime, interval_minutes:int = 5) -> datetime:
 
     return rounded_dt
 
-def extract_data(data:pd.DataFrame,unique_id='BTCUSD',target='Close'):
+
+def extract_data(data: pd.DataFrame, unique_id='BTCUSD', target='Close'):
     data = data.reset_index()
-    data['y'] = data[target] #  can this be close?
+    data['y'] = data[target]
     data['ds'] = data['Datetime']
     X = data[['y', 'ds']]
-    X['unique_id'] =unique_id
-    X.ds= pd.to_datetime(X.ds, format='%Y-%m-%d %H:%M:%S%z',utc=True)
-
+    X['unique_id'] = unique_id
+    X.loc[:, 'ds'] = pd.to_datetime(X['ds'], format='%Y-%m-%d %H:%M:%S%z', utc=True)
     return X
 
 
