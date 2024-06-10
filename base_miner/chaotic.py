@@ -82,6 +82,7 @@ def extract_data(data: pd.DataFrame, unique_id='BTCUSD', target='Close'):
     X = data[['y', 'ds']]
     X['unique_id'] = unique_id
     X.loc[:, 'ds'] = pd.to_datetime(X['ds'], format='%Y-%m-%d %H:%M:%S%z', utc=True)
+    X['ds']  = X['ds'].dt.tz_convert('UTC').dt.tz_localize(None)
     return X
 
 
@@ -130,7 +131,7 @@ def predict_chaotic(timestamp:datetime, model,input_len = 1000) -> float:
 
     # data.to_csv('mining_models/base_miner_data.csv')
     input = extract_data(matching_row)
-    input['ds'] =  input['ds'].dt.tz_convert('UTC').dt.tz_localize(None)
+    #input['ds'] =  input['ds'].dt.tz_convert('UTC').dt.tz_localize(None)
 
     prediction = model.predict(input)
     print(f"Pred len is {prediction.shape[0]}")
