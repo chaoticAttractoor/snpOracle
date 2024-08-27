@@ -37,7 +37,8 @@ import tensorflow
 import numpy as np
 from tensorflow.keras.models import load_model
 from huggingface_hub import hf_hub_download
-
+from neuralforecast import NeuralForecast
+from base_miner.chaotic import prep_data_chaotic, extract_data, predict_chaotic
 import os
 from dotenv import load_dotenv
 
@@ -170,29 +171,11 @@ class Miner(BaseMinerNeuron):
 
         timestamp = synapse.timestamp
         # Download the file
-        if(self.config.hf_repo_id=="LOCAL"):
-            model_path = f'./{self.config.model}'
-            bt.logging.info(f"Model weights file from a local folder will be loaded - Local weights file path: {self.config.model}")
-        else:
-            if not os.getenv("HF_ACCESS_TOKEN"):
-                print("Cannot find a Huggingface Access Token - model download halted.")
-            token = os.getenv("HF_ACCESS_TOKEN")
-            model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
-            bt.logging.info(f"Model downloaded from huggingface at {model_path}")
-
-        model = load_model(model_path)
-        data = prep_data()
-        scaler, _, _ = scale_data(data)
-        #mse = create_and_save_base_model_lstm(scaler, X, y)
-
-        # type needs to be changed based on the algo you're running
-        # any algo specific change logic can be added to predict function in predict.py
-        prediction = predict(timestamp, scaler, model, type='lstm') 
-        bt.logging.info(f"Prediction: {prediction}")
-        #pred_np_array = np.array(prediction).reshape(-1, 1)
-
+        model = NeuralForecast.load(self.model_dir)
+        data = prep_data_chaotic()
+        prediction = predict_chaotic(timestamp, model) 
         # logic to ensure that only past 20 day context exists in synapse
-        synapse.prediction = list(prediction[0])
+        synapse.prediction = prediction[0].tolist()
 
         if(synapse.prediction != None):
             bt.logging.success(
