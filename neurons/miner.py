@@ -56,8 +56,7 @@ class Miner(BaseMinerNeuron):
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
         print(config)
-        # TODO(developer): Anything specific to your use case you can do here
-        self.model_loc = self.config.model
+        self.model_dir = f'./mining_models/{self.config.model}'
         if self.config.neuron.device == 'cpu':
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # This will force TensorFlow to use CPU only
 
@@ -171,7 +170,7 @@ class Miner(BaseMinerNeuron):
 
         timestamp = synapse.timestamp
         # Download the file
-        model = NeuralForecast.load(self.model_dir)
+        model = NeuralForecast.load('mining_models/chaotic_snp/')
         data = prep_data_chaotic()
         prediction = predict_chaotic(timestamp, model) 
         # logic to ensure that only past 20 day context exists in synapse
