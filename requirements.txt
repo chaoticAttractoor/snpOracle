@@ -1,4 +1,4 @@
-bittensor==6.9.4
+bittensor==7.4.0
 loguru
 numpy
 pandas
@@ -13,7 +13,7 @@ ta
 template
 torch
 transformers
-yfinance
+yfinance==0.2.37
 statsmodels
 huggingface_hub==0.22.2
 wandb==0.16.6
