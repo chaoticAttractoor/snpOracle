@@ -17,20 +17,26 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import argparse
+import os
 import time
 import typing
+
 import bittensor as bt
 
-from base_miner.predict import predict
-from base_miner.get_data import prep_data, scale_data
-import yfinance as yf
-#import predictionnet 
+# ML imports
+from dotenv import load_dotenv
+from huggingface_hub import hf_hub_download
+from tensorflow.keras.models import load_model
+
+# import predictionnet
 # Bittensor Miner Template:
 import predictionnet
+from base_miner.get_data import prep_data, scale_data
+from base_miner.predict import predict
 
 # import base miner class which takes care of most of the boilerplate
 from predictionnet.base.miner import BaseMinerNeuron
+
 
 # ML imports
 import tensorflow
@@ -42,7 +48,9 @@ from base_miner.chaotic import prep_data_chaotic, extract_data, predict_chaotic
 import os
 from dotenv import load_dotenv
 
+
 load_dotenv()
+
 
 class Miner(BaseMinerNeuron):
     """
@@ -56,9 +64,14 @@ class Miner(BaseMinerNeuron):
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
         print(config)
+        # TODO(developer): Anything specific to your use case you can do here
+        self.model_loc = self.config.model
+        if self.config.neuron.device == "cpu":
+            os.environ["CUDA_VISIBLE_DEVICES"] = (
+                "-1"  # This will force TensorFlow to use CPU only
+            )
         self.model_dir = f'./mining_models/{self.config.model}'
-        if self.config.neuron.device == 'cpu':
-            os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # This will force TensorFlow to use CPU only
+
 
     async def blacklist(
         self, synapse: predictionnet.protocol.Challenge
@@ -91,30 +104,35 @@ class Miner(BaseMinerNeuron):
         the uid of the sender via a metagraph.hotkeys.index( synapse.dendrite.hotkey ) call.
 
         Otherwise, allow the request to be processed further.
-        """        
+        """
 
         # TODO(developer): Define how miners should blacklist requests.
 
         bt.logging.info("Checking miner blacklist")
 
-        uid = self.metagraph.hotkeys.index( synapse.dendrite.hotkey)
+        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
         stake = self.metagraph.S[uid].item()
 
-        if not self.config.blacklist.allow_non_registered and synapse.dendrite.hotkey not in self.metagraph.hotkeys:
+        if (
+            not self.config.blacklist.allow_non_registered
+            and synapse.dendrite.hotkey not in self.metagraph.hotkeys
+        ):
             # Ignore requests from un-registered entities.
             bt.logging.trace(
                 f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
             )
             return True, "Unrecognized hotkey"
 
-        uid = self.metagraph.hotkeys.index( synapse.dendrite.hotkey)
+        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
         bt.logging.info(f"Requesting UID: {uid} | Stake at UID: {stake}")
 
         if stake <= self.config.validator.min_stake:
             # Ignore requests if the stake is below minimum
-            bt.logging.info(f"Hotkey: {synapse.dendrite.hotkey}: stake below minimum threshold of {self.config.validator.min_stake}")
+            bt.logging.info(
+                f"Hotkey: {synapse.dendrite.hotkey}: stake below minimum threshold of {self.config.validator.min_stake}"
+            )
             return True, "Stake below minimum threshold"
-        
+
         if self.config.blacklist.force_validator_permit:
             # If the config is set to force validator permit, then we should only allow requests from validators.
             if not self.metagraph.validator_permit[uid]:
@@ -128,7 +146,9 @@ class Miner(BaseMinerNeuron):
         )
         return False, "Hotkey recognized!"
 
-    async def priority(self, synapse: predictionnet.protocol.Challenge) -> float:
+    async def priority(
+        self, synapse: predictionnet.protocol.Challenge
+    ) -> float:
         """
         The priority function determines the order in which requests are handled. More valuable or higher-priority
         requests are processed before others. You should design your own priority mechanism with care.
@@ -182,16 +202,16 @@ class Miner(BaseMinerNeuron):
 
         timestamp = synapse.timestamp
         # Download the file
+
         model = NeuralForecast.load('mining_models/chaotic_snp/')
         data = prep_data_chaotic()
         prediction = predict_chaotic(timestamp, model) 
+
         # logic to ensure that only past 20 day context exists in synapse
         synapse.prediction = prediction[0].tolist()
 
-        if(synapse.prediction != None):
-            bt.logging.success(
-                f"Predicted price 🎯: {synapse.prediction}"
-            )
+        if synapse.prediction is not None:
+            bt.logging.success(f"Predicted price 🎯: {synapse.prediction}")
         else:
             bt.logging.info("No price predicted for this request.")
 
@@ -199,24 +219,28 @@ class Miner(BaseMinerNeuron):
 
     def save_state(self):
         pass
+
     def load_state(self):
         pass
 
     def print_info(self):
         metagraph = self.metagraph
-        self.uid = self.metagraph.hotkeys.index(self.wallet.hotkey.ss58_address)
+        self.uid = self.metagraph.hotkeys.index(
+            self.wallet.hotkey.ss58_address
+        )
 
         log = (
             "Miner | "
             f"Step:{self.step} | "
             f"UID:{self.uid} | "
             f"Block:{self.block} | "
-            f"Stake:{metagraph.S[self.uid]} | "
-            f"Trust:{metagraph.T[self.uid]} | "
-            f"Incentive:{metagraph.I[self.uid]} | "
-            f"Emission:{metagraph.E[self.uid]}"
+            f"Stake:{metagraph.S[self.uid]:.4f} | "
+            f"Trust:{metagraph.T[self.uid]:.4f} | "
+            f"Incentive:{metagraph.I[self.uid]:.4f} | "
+            f"Emission:{metagraph.E[self.uid]:.4f}"
         )
         bt.logging.info(log)
+
 
 # This is the main function, which runs the miner.
 if __name__ == "__main__":
@@ -224,4 +248,3 @@ if __name__ == "__main__":
         while True:
             miner.print_info()
             time.sleep(15)
-
