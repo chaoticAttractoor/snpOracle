@@ -105,7 +105,7 @@ def add_args(cls, parser):
     parser.add_argument(
         "--timeout",
         type=int,
-        default=20,
+        default=22,
         help="timeout in seconds",
     )
 
