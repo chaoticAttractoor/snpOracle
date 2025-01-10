@@ -78,14 +78,13 @@ def extract_data(data: pd.DataFrame, unique_id='BTCUSD', target='Close'):
     """Format the data to match NeuralForecast input structure."""
     data = data.reset_index()
     data['y'] = data[target]
-    data['ds'] = pd.to_datetime(data['Datetime'], utc=True)  # Ensure it's timezone-aware
+    
+    # Ensure 'ds' is a proper datetime without timezone
+    data['ds'] = pd.to_datetime(data['Datetime'], utc=True).dt.tz_localize(None)
 
-    # Convert to integer timestamps if needed
+    # Check dtype correctly
     if not np.issubdtype(data['ds'].dtype, np.datetime64):
-        raise ValueError("❌ `ds` column must be a valid datetime64 format.")
-
-    # Ensure `ds` is in correct format for NeuralForecast
-    data['ds'] = data['ds'].astype('datetime64[ns]')  # Convert explicitly
+        raise ValueError(f"❌ `ds` column must be datetime64, got {data['ds'].dtype}")
 
     X = data[['y', 'ds']].copy()
     X['unique_id'] = unique_id  # Ensure unique_id is added
