@@ -74,15 +74,24 @@ def round_down_time(dt:datetime, interval_minutes:int = 5) -> datetime:
 
     return rounded_dt
 
-def extract_data(data:pd.DataFrame,unique_id='BTCUSD',target='Close'):
+def extract_data(data: pd.DataFrame, unique_id='BTCUSD', target='Close'):
+    """Format the data to match NeuralForecast input structure."""
     data = data.reset_index()
-    data['y'] = data[target] #  can this be close?
-    data['ds'] = data['Datetime']
-    X = data[['y', 'ds']]
-    X['unique_id'] =unique_id
-    X.ds= pd.to_datetime(X.ds, format='%Y-%m-%d %H:%M:%S%z',utc=True)
+    data['y'] = data[target]
+    data['ds'] = pd.to_datetime(data['Datetime'], utc=True)  # Ensure it's timezone-aware
+
+    # Convert to integer timestamps if needed
+    if not np.issubdtype(data['ds'].dtype, np.datetime64):
+        raise ValueError("❌ `ds` column must be a valid datetime64 format.")
+
+    # Ensure `ds` is in correct format for NeuralForecast
+    data['ds'] = data['ds'].astype('datetime64[ns]')  # Convert explicitly
+
+    X = data[['y', 'ds']].copy()
+    X['unique_id'] = unique_id  # Ensure unique_id is added
 
     return X
+
 
 
 
