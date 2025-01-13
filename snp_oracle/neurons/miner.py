@@ -191,7 +191,8 @@ class Miner(BaseMinerNeuron):
         model = NeuralForecast.load(os.getenv("model_path"))
         data = prep_data_chaotic()  
         prediction = predict_chaotic(timestamp, model) 
-        data['unique_id'] = 'snp'
+        data['unique_id'] = 'snp' 
+        data = data.tail(150)
 
         # Generate encryption key for this request
         encryption_key = Fernet.generate_key()
