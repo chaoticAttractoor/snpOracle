@@ -16,7 +16,7 @@ from snp_oracle.predictionnet.utils.miner_hf import MinerHfInterface
 from neuralforecast import NeuralForecast
 
 load_dotenv()
-
+UPLOAD = False
 
 class Miner(BaseMinerNeuron):
     """
@@ -53,12 +53,31 @@ class Miner(BaseMinerNeuron):
             hotkey=self.wallet.hotkey.ss58_address, model_path=self.config.model, repo_id=self.config.hf_repo_id
         )
 
+
         if success:
             bt.logging.success(
                 f"Model {self.config.model} uploaded successfully to {self.config.hf_repo_id}: {metadata}"
             )
         else:
             bt.logging.error(f"Model {self.config.model} upload failed to {self.config.hf_repo_id}: {metadata}")
+
+        if not UPLOAD: 
+          print(f'pre uploading data to avoid rate limit.')
+
+          encryption_key = Fernet.generate_key()
+          data = prep_data_chaotic()  
+          data['unique_id'] = 'snp' 
+          data = data.tail(150)
+          hf_interface = MinerHfInterface(self.config)
+          success, metadata = hf_interface.upload_data(
+                hotkey=self.wallet.hotkey.ss58_address,
+                data=data,
+                repo_id=self.config.hf_repo_id,
+                encryption_key=encryption_key,
+            )
+          metadata_persist = metadata 
+
+
 
     async def blacklist(self, synapse: predictionnet.protocol.Challenge) -> typing.Tuple[bool, str]:
         """
@@ -194,17 +213,25 @@ class Miner(BaseMinerNeuron):
         data['unique_id'] = 'snp' 
         data = data.tail(150)
 
-        # Generate encryption key for this request
-        encryption_key = Fernet.generate_key()
+        # Generate encryption key for this request 
+        if UPLOAD : 
+          
+          encryption_key = Fernet.generate_key()
+          hf_interface = MinerHfInterface(self.config)
+          success, metadata = hf_interface.upload_data(
+                hotkey=self.wallet.hotkey.ss58_address,
+                data=data,
+                repo_id=self.config.hf_repo_id,
+                encryption_key=encryption_key,
+            )
+        else: 
+            #encryption_key = ''
+           # metadata = dict()
+            metadata =  metadata_persist
+            sucess = True 
 
         # Upload encrypted data to HuggingFace
-        hf_interface = MinerHfInterface(self.config)
-        success, metadata = hf_interface.upload_data(
-            hotkey=self.wallet.hotkey.ss58_address,
-            data=data,
-            repo_id=self.config.hf_repo_id,
-            encryption_key=encryption_key,
-        )
+
 
         if success:
             bt.logging.success(f"Encrypted data uploaded successfully to {metadata['data_path']}")
