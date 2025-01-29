@@ -1,10 +1,23 @@
 Release Notes
 =============
+3.0.2
+-----
+Released on January 29th 2025
+- Implement dendrite.forward and increase the default timeout for validator neurons to be 20s to allow miners more time to respond
+- Enable wandb by default for validators
+
+3.0.1
+-----
+Released on January 12th 2025
+- Improvements in validator README instructions
+- Add flags to opt into additional functionality
+
 
 3.0.0
 -----
-Released on Testnet December 20th 2024
+Released on January 10th 2025
 - Require open sourcing on HuggingFace
+- Update to Bittensor v8.5.1 and leverage CR3
 - Leverage Poetry for dependency management
 - Enhance README instructions
 
